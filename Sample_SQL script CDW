@@ -1,0 +1,1093 @@
+/*********************************************
+Change log
+
+Sample Caboodle Code
+*********************************************/
+
+use cdw
+
+DECLARE @firstday bigint = cast(format(GetDate() -29,'yyyyMMdd') as bigint) 
+DECLARE @lastDay bigint = cast(format(GetDate() -23,'yyyyMMdd') as bigint) 
+
+
+ ;WITH cdqm ( REC_TYPE, EPISODEID, EPISODEID2, ADMITDATE, ADMIT_SRC, ADMIT_TYPE, FACILITY, THOMPSON_BILL, DISCH_DATE, 
+DISCH_STATUS_DISP, DISCH_STATUS_DP, DOB, PRI_SRC_PAY, HISP_ETHINICITY, PATIENT_ID, CMS_NBR, NPI_NBR, 
+FIRST_NAME, MEM_NBR, LAST_NAME, ATTENDING, ADMITTING, COMMAS, ZIP, ROOM, RACE, SECND_SRC_PAY, 
+COMMAS_AFTERINS, GENDER, DX_LIST, PROB_LIST, PROB_DATE_LIST, PATIENT_CLASS  ,  BIRTHEXIST , BABYPT_ID 
+,BABY_WT, NEWBORN_TERM, NICU, NEBORNWKS 
+
+--encounterkey 
+,dischdate, two_commas, enc_type
+)
+as (
+
+select distinct  '2,'																			[REC_TYPE],
+		
+		Case isnumeric(baf.AccountEpicId) when 1 then 
+		convert(varchar,baf.AccountEpicId)  + ',' else ',' end								[EPISODEID],  --HAR 
+		 CAST(baf.AccountEpicId	 AS NUMERIC) 				[EPISODE_ID_NUM],
+		--baf.AccountEpicId																	[EPISODE_ID],
+		ADMDATE.ADM_DATE																[ADMITDATE],
+		concat(ef.AdmissionSourceCode, ',')												[ADMIT_SRC], 
+		concat(ef.admissiontypecode, ',')												[ADMIT_TYPE],
+		DEPT_INFO.FACILITY																[FACILITY],
+		CASE WHEN  ef.PatientClassCategoryKey = '2581531' THEN 
+			CASE WHEN COVERAGE.COVERAGE_EPICID = '40000103'then '121,,'
+				ELSE '111,,' END
+		ELSE  '131,,'
+		END																				[THOMPSON_BILL],
+	
+		
+		DISCH_DATE [DISCH_DATE],
+	
+
+	
+		
+		--below is going to rectype2 and rectype28
+		case 
+		when ef.DischargeDispositionCode = '01' then '01,'
+		when ef.DischargeDispositionCode = '02' then '02,'
+		when ef.DischargeDispositionCode  = '03' then '05,'
+when ef.DischargeDispositionCode  = '04' then '05,'
+when ef.DischargeDispositionCode  = '05' then '04,'
+when ef.DischargeDispositionCode  = '06' then '01,'
+when ef.DischargeDispositionCode  = '07' then '07,'
+when ef.DischargeDispositionCode  = '08' then '04,'
+when ef.DischargeDispositionCode  = '09' then '06,'
+when ef.DischargeDispositionCode  = '20' then '08,'
+--when ef.DischargeDispositionCode  = '21,' then 'exclude,'
+--when ef.DischargeDispositionCode  = '30,' then 'exclude,'
+--when ef.DischargeDispositionCode  = '40,' then 'exclude,'
+when ef.DischargeDispositionCode  = '41' then '06,'
+--when ef.DischargeDispositionCode  = '42,' then 'exclude,'
+when ef.DischargeDispositionCode  = '43' then '04,'
+when ef.DischargeDispositionCode  = '50' then '02,'
+when ef.DischargeDispositionCode  = '51' then '03,'
+--when ef.DischargeDispositionCode  = '61,' then 'exclude,'
+when ef.DischargeDispositionCode  = '62' then '05,'
+when ef.DischargeDispositionCode  = '63' then '05,'
+when ef.DischargeDispositionCode  = '64' then '05,'
+when ef.DischargeDispositionCode  = '65' then '05,'
+when ef.DischargeDispositionCode  = '66' then '04,'
+when ef.DischargeDispositionCode  = '70' then '05,'
+when ef.DischargeDispositionCode  = '81' then '01,'
+when ef.DischargeDispositionCode  = '82' then '04,'
+when ef.DischargeDispositionCode  = '83' then '05,'
+when ef.DischargeDispositionCode  = '84' then '05,'
+when ef.DischargeDispositionCode  = '85' then '04,'
+when ef.DischargeDispositionCode  = '86' then '01,'
+--when ef.DischargeDispositionCode  = '87,' then 'exclude,'
+when ef.DischargeDispositionCode  = '88,' then '04,'
+--when ef.DischargeDispositionCode  = '89,' then 'exclude,'
+when ef.DischargeDispositionCode  = '90' then '05,'
+when ef.DischargeDispositionCode  = '91' then '05,'
+when ef.DischargeDispositionCode  = '92' then '05,'
+when ef.DischargeDispositionCode  = '93' then '05,'
+when ef.DischargeDispositionCode  = '94' then '04,'
+when ef.DischargeDispositionCode  = '95' then '05,'
+when ef.DischargeDispositionCode  = '99' then '07,' 
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition = 'Home-Health Care Service' then '01,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Home or Self Care' then '01,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition = 'Short Term Hospital' then '04,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Skilled Nursing Facility' then '05,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Custodial Care Facility' then '05,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Cancer Center/Childrens Hospital' then '04,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Left Against Medical Advice' then '07,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Admitted as an Inpatient' then '04,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Expired' then '06,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Reserved by NUBC#20' then '08,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Expired at Medical Facility' then '06,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Federal Hospital' then '04,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Hospice/Home' then '02,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Hospice/Medical Facility' then '03,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Rehab Facility' then '05,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Long Term Care' then '05,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Nursing Facility (certified by Medicaid not Medicare)' then '05,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Psychiatric Hospital' then '05,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Critical Access Hospital' then '04,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Another Health Care Institution Not Defined' then '05,'
+when ef.DischargeDispositionCode = '' and ef.DischargeDisposition  = 'Home or Self Care w/Planned Readmission' then '01,'
+when ef.DischargeDispositionCode = '' and ef.DischargeDisposition  = 'Short Term Hospital w/Planned readmission' then '04,'
+when ef.DischargeDispositionCode = '' and ef.DischargeDisposition  = 'Skilled Nursing Facility w/Planned readmission' then '05,'
+when ef.DischargeDispositionCode = '' and ef.DischargeDisposition  = 'Custodial Care Facility w/Planned Readmission' then '05,'
+when ef.DischargeDispositionCode = '' and ef.DischargeDisposition  = 'Cancer Center/Childrens Hospital w/Planned Readmission' then '04,'
+when ef.DischargeDispositionCode = '' and ef.DischargeDisposition  = 'Home-Health Care Svc w/ Planned Readmission' then '01,'
+when ef.DischargeDispositionCode = '' and ef.DischargeDisposition  = 'Federal Hospital w/Planned Readmission' then '04,'
+when ef.DischargeDispositionCode = '' and ef.DischargeDisposition  = 'Rehab Facility w/ Planned Readmssion' then '05,'
+when ef.DischargeDispositionCode = '' and ef.DischargeDisposition  = 'Long Term Care w/ Planned Readmission' then '05,'
+when ef.DischargeDispositionCode = '' and ef.DischargeDisposition  = 'Nursing Facility w/Planned Readmission (certified by Medicaid not Medicare)' then '05,'
+when ef.DischargeDispositionCode = '' and ef.DischargeDisposition  = 'Psychiatric Hospital w/ Planned Readmssion' then '05,'
+when ef.DischargeDispositionCode = '' and ef.DischargeDisposition  = 'Critical Access Hospital w/ Planned Readmission' then '04,'
+when ef.DischargeDispositionCode = '' and ef.DischargeDisposition  = 'Another Health Care Institution Not Defined w/ Planned Readmission' then '05,'
+when ef.DischargeDispositionCode = '' and ef.DischargeDisposition  = 'Left Without Being Seen' then '07,'
+
+--when ef.DischargeDispositionCode  = '100,' then 'exclude,'
+--when ef.DischargeDispositionCode  = '200,' then 'exclude,'
+		else 'needcode,' end [DISCH_STATUS_DISP],
+
+
+	--	ef.DischargeDispositionCode [DISCH_STATUS_DP], --needed one without ',' for rectype28
+   --- going to rectype 28 only with no ','
+
+   case when ef.DischargeDispositionCode = '01' then '1'
+		when ef.DischargeDispositionCode = '02' then '4a'
+		when ef.DischargeDispositionCode  = '03' then '5' 
+		when ef.DischargeDispositionCode  = '04' then '5'
+when ef.DischargeDispositionCode  = '05' then '4c'
+when ef.DischargeDispositionCode  = '06' then '1'
+when ef.DischargeDispositionCode  = '07' then '7'
+when ef.DischargeDispositionCode  = '08' then '4a'
+when ef.DischargeDispositionCode  = '09' then '6'
+when ef.DischargeDispositionCode  = '20' then '8'
+--when ef.DischargeDispositionCode  = '21,' then 'exclude,'
+--when ef.DischargeDispositionCode  = '30,' then 'exclude,'
+--when ef.DischargeDispositionCode  = '40,' then 'exclude,'
+when ef.DischargeDispositionCode  = '41' then '6'
+--when ef.DischargeDispositionCode  = '42,' then 'exclude,'
+when ef.DischargeDispositionCode  = '43' then '4d'
+when ef.DischargeDispositionCode  = '50' then '2,'
+when ef.DischargeDispositionCode  = '51' then '3'
+--when ef.DischargeDispositionCode  = '61,' then 'exclude,'
+when ef.DischargeDispositionCode  = '62' then '5'
+when ef.DischargeDispositionCode  = '63' then '5'
+when ef.DischargeDispositionCode  = '64' then '5'
+when ef.DischargeDispositionCode  = '65' then '5'
+when ef.DischargeDispositionCode  = '66' then '4b'
+when ef.DischargeDispositionCode  = '70' then '5'
+when ef.DischargeDispositionCode  = '81' then '1'
+when ef.DischargeDispositionCode  = '82' then '4a'
+when ef.DischargeDispositionCode  = '83' then '5'
+when ef.DischargeDispositionCode  = '84' then '5'
+when ef.DischargeDispositionCode  = '85' then '4c'
+when ef.DischargeDispositionCode  = '86' then '1'
+--when ef.DischargeDispositionCode  = '87,' then 'exclude,'
+when ef.DischargeDispositionCode  = '88,' then '4d'
+--when ef.DischargeDispositionCode  = '89,' then 'exclude,'
+when ef.DischargeDispositionCode  = '90' then '5'
+when ef.DischargeDispositionCode  = '91' then '5'
+when ef.DischargeDispositionCode  = '92' then '5'
+when ef.DischargeDispositionCode  = '93' then '5'
+when ef.DischargeDispositionCode  = '94' then '4b'
+when ef.DischargeDispositionCode  = '95' then '5'
+when ef.DischargeDispositionCode  = '99' then '7'
+--when ef.DischargeDispositionCode  = '100,' then 'exclude,'
+--when ef.DischargeDispositionCode  = '200,' then 'exclude,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Home or Self Care' then '1,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Short Term Hospital' then '4a,'
+when ef.DischargeDispositionCode   = '' and ef.DischargeDisposition = 'Skilled Nursing Facility' then '5,'
+when ef.DischargeDispositionCode   = '' and ef.DischargeDisposition = 'Custodial Care Facility' then '5,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Cancer Center/Childrens Hospital' then '4c,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Home-Health Care Service' then '1,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Left Against Medical Advice' then '7,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Admitted as an Inpatient' then '4a,'
+when ef.DischargeDispositionCode   = '' and ef.DischargeDisposition = 'Expired' then '6,'
+when ef.DischargeDispositionCode   = '' and ef.DischargeDisposition = 'Reserved by NUBC#20' then '8,'
+when ef.DischargeDispositionCode   = '' and ef.DischargeDisposition = 'Expired at Medical Facility' then '6,'
+when ef.DischargeDispositionCode   = '' and ef.DischargeDisposition = 'Federal Hospital' then '4d,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Hospice/Home' then '2,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Hospice/Medical Facility' then '3,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Rehab Facility' then '5,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Long Term Care' then '5,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Nursing Facility (certified by Medicaid not Medicare)' then '5,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Psychiatric Hospital' then '5,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Critical Access Hospital' then '4b,'
+when ef.DischargeDispositionCode   = '' and ef.DischargeDisposition = 'Another Health Care Institution Not Defined' then '5,'
+when ef.DischargeDispositionCode   = '' and ef.DischargeDisposition = 'Home or Self Care w/Planned Readmission' then '1,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Short Term Hospital w/Planned readmission' then '4a,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Skilled Nursing Facility w/Planned readmission' then '5,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Custodial Care Facility w/Planned Readmission' then '5,'
+when ef.DischargeDispositionCode   = '' and ef.DischargeDisposition = 'Cancer Center/Childrens Hospital w/Planned Readmission' then '4c,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Home-Health Care Svc w/ Planned Readmission' then '1,'
+when ef.DischargeDispositionCode   = '' and ef.DischargeDisposition = 'Federal Hospital w/Planned Readmission' then '4d,'
+when ef.DischargeDispositionCode   = '' and ef.DischargeDisposition = 'Rehab Facility w/ Planned Readmssion' then '5,'
+when ef.DischargeDispositionCode   = '' and ef.DischargeDisposition = 'Long Term Care w/ Planned Readmission' then '5,'
+when ef.DischargeDispositionCode   = '' and ef.DischargeDisposition = 'Nursing Facility w/Planned Readmission (certified by Medicaid not Medicare)' then '5,'
+when ef.DischargeDispositionCode  = '' and ef.DischargeDisposition  = 'Psychiatric Hospital w/ Planned Readmssion' then '5,'
+when ef.DischargeDispositionCode   = '' and ef.DischargeDisposition = 'Critical Access Hospital w/ Planned Readmission' then '4b,'
+when ef.DischargeDispositionCode   = '' and ef.DischargeDisposition = 'Another Health Care Institution Not Defined w/ Planned Readmission' then '5,'
+when ef.DischargeDispositionCode   = '' and ef.DischargeDisposition = 'Left Without Being Seen' then '7,'
+
+		else 'needcode28' end  [DISCH_STATUS_DP],
+
+		PT_INFO.DOB		[DOB],
+		--need to verify this part
+		(CASE WHEN  COVERAGE.COVERAGE_FINCLASS = 'Medicare' THEN '1,'
+		 	 WHEN COVERAGE.COVERAGE_FINCLASS = 'Medicaid'then '2,'
+		 	WHEN COVERAGE.COVERAGE_FINCLASS != 'Medicare' and COVERAGE.COVERAGE_FINCLASS != 'Medicaid' then '3,'
+		 	WHEN COVERAGE.COVERAGE_FINCLASS = ' 'then '4,'
+		 ELSE  ','
+		 END)																		[PRI_SRC_PAY],
+		--02/2023 ks029852 remove comma in ethnicity field
+		concat(replace(PT_INFO.HISP_ETHNICITY, ',', ''), ',')   [HISP_ETHNICITY],
+		--Hispanic or Latino
+		PT_INFO.MRN  patient_id,
+		--PT_INFO.patient_id  patient_id,
+		'100018,' as cms_nbr, '1720085137,' [NPI_NBR], 
+		PT_INFO.FRIST_NAME   [FRIST_NAME], 
+		
+		case when coverage.mem_id in ( '*Unspecified', '*Not Applicable') then ','
+		when coverage.mem_id IS NOT NULL then concat(coverage.mem_id, ',')  end [MEM_NBR],  --
+		
+		--concat(coverage.mem_id, ',') [MEM_NBR], 
+		
+		--concat(ELIGIBILITY.MEM_ID, ',') [MEM_NBR], 
+		PT_INFO.LAST_NAME  [LAST_NAME], 
+		
+		ATTENDING.NPI									[ATTENDING],
+			ADMITTING.NPI																	[ADMITTING],
+			case when ctf.commas is NULL then 
+			',,,,' else ctf.commas end
+			
+			[COMMAS],
+		--	',,,,'																[COMMAS],
+		ADDRESS.ZIP																			[ZIP], 
+		case when room_info.room != 'NULL,' then room_info.room 
+		when room_info.room is NULL then ','
+		end  [Room],
+		--room_INFO.room																		[ROOM],
+		concat(PT_INFO.RACE, ',')																	[RACE],
+		COVERAGE2.second_src_pay														second_src_pay, 
+		 ',,'																				[COMMA_AFTERINS],
+		PT_INFO.SEX																			[GENDER], 
+		--icd9 diagnosis encounter dx
+		case when DX_INFO.dx_codes   IS NULL then 
+		',,,,,,,,,,,,,,,,,,,,,,,,,'
+		else DX_INFO.dx_codes end														[DX_LIST],
+		--DX_INFO.dx_codes                                                                    [DX_LIST],
+		case when prob_info.PROB_codes IS NULL then 
+		',,,,,,,,,,,,,,,,,,,,,,,,,' 
+		else prob_info.PROB_codes end														[PROB_LIST],
+		--PROB_INFO.prob_codes																[PROB_LIST],
+		case when PROB_INFO.prob_dates IS NULL then 
+		',,,,,,,,,,,,,,,,,,,,,,,,,' 
+		else PROB_INFO.prob_dates end														[PROB_DATE_LIST], 
+		--PROB_INFO.prob_dates																[PROB_DATE_LIST], 
+		
+		ef.PatientClass                                                                     [PATIENT_CLASS],
+		
+
+		---BELOW IS BABY MOTHER INFORMATION
+		
+		/*
+		Case isnumeric(BIRTH.birthkey)
+        when 1 then convert(varchar, birth.birthkey)  + ','
+        else ',' end  [BIRTHEXIST],  
+		-- CAST(BIRTH.birthkey	 AS NUMERIC) 				[BIRTHEXIST],
+		*/
+		--convert(numeric, birth.birthkey) [BIRTHEXIST],
+
+		Birth.BIRTHKEY_1 [BIRTHEXIST],
+
+		/*
+		 Case isnumeric(birth.BIRTHKEY_1)  when 1 then Convert(varchar(100), birth.BIRTHKEY_1)
+        else '0' end [BIRTHEXIST],*/
+		--Convert(varchar(100), birth.BIRTHKEY_1) [BIRTHEXIST],
+
+		--Convert(varchar(100),subquery2.episode_id)
+		birth.BABYPT_ID  [BABYPT_ID] ,
+		/*
+		Case isnumeric(BIRTH.HAR_BABY)
+        when 1 then convert(varchar, BIRTH.HAR_BABY)  + ','
+        else ',' end  [BABYPT_ID]  ,   --Baby har information
+		*/
+		
+		birth.BABY_WT              [BABY_WT],	
+		birth.NEWBORN_TERM                         [NEWBORN_TERM],
+		birth.NICU  [NICU],
+		birth.NEWBORN_WKS   [NEWBORN_WKS]
+		
+		--,ef.EncounterKey 
+	
+		,   concat(Replace(CONVERT(varchar(10), baf.DischargeDateKey, 101),'/',''), ',')    
+		, (',,')
+		, ef.Type
+from BillingAccountFact baf
+LEFT outer JOIN encounterfact ef on ef.EncounterKey = baf.PrimaryEncounterKey
+/*
+LEFT OUTER JOIN (select    ef.encounterkey ENCOUNTERKEY, 
+				            max(baf.AccountEpicId)  HAR, 
+							max(baf.secondcoveragekey)  SEC_COVERAGE
+						  FROM    Encounterfact ef 
+						    left outer join BillingAccountFact baf on baf.PrimaryEncounterKey = ef.EncounterKey
+
+							group by ef.encounterkey			
+							)  BILLING on BILLING.ENCOUNTERKEY = baf.PrimaryEncounterKey  --ONLY FOR Admit or Obs patients (non ED discharge Patients)
+							*/
+LEFT OUTER JOIN (select    concat(Replace(CONVERT(varchar(10), admdate.DateValue, 101),'/',''), ',')  ADM_DATE, 
+								admdate.DateKey  DATEKEY
+						  FROM   datedim admdate
+							where admdate.DateValue IS NOT NULL 
+										)  ADMDATE on ADMDATE.DATEKEY = baf.AdmissionDateKey
+
+LEFT OUTER JOIN (select    concat(Replace(CONVERT(varchar(10), DischargeDate.DateValue, 101),'/',''), ',')  DISCH_DATE, 
+								DischargeDate.DateKey  DATEKEY, 
+								dischargedate.datevalue DISHC_DATE_FILTER
+						  FROM   DATEDIM DischargeDate
+							where DischargeDate.DateValue IS NOT NULL
+										)  DISCHDATE on DISCHDATE.DATEKEY = baf.DischargeDateKey
+LEFT OUTER JOIN (select    pd.PatientKey  PTKEY
+						 , pd.DurableKey DUR_KEY --used for Eligibilityeventfact
+						 , concat(replace(convert(varchar(10), pd.birthdate, 101),'/',''),',') DOB
+						 	 --, (CASE WHEN pd.Ethnicity = 'Hispanic or Latino' then 'Y,' else 'N,' End)   
+						 , CASE	
+									WHEN  pd.Ethnicity = 	'Other Hispanic, Latino/a, or Spanish origin'  Then	'Y'
+									WHEN  pd.Ethnicity = 'Cuban' Then	'Y'
+									WHEN  pd.Ethnicity = 	'Black'		then 'N'
+									WHEN pd.Ethnicity =  '*Unknown'	Then 'N'
+									WHEN pd.Ethnicity = 	'Not Hispanic, Latino/a, or Spanish origin' Then 	'N'
+									WHEN pd.Ethnicity = 	'Mexican, Mexican American, or Chicano/a'		Then	'Y'
+									WHEN pd.Ethnicity = 	'Black or African American'	Then	'N'
+									WHEN pd.Ethnicity = 	'Unknown'		Then	'N'
+									WHEN pd.Ethnicity = 	'Decline to Answer'		Then    'N'
+									WHEN pd.Ethnicity in ('*Deleted', '*Unspecified','*Not Applicable')		Then	'N'
+									WHEN pd.Ethnicity = 	'Puerto Rican' then 'Y'
+
+									else ' ' --02/2023 do not populate ethnicity
+									END  [HISP_ETHNICITY]
+						 , concat(pd.PatientEpicId, ',')  patient_id
+						 , concat(pd.PrimaryMrn, ',') MRN
+						 , concat(pd.FirstName, ',')   [FRIST_NAME]
+						, concat(pd.LastName, ',,,') [LAST_NAME] 
+					--	, concat(pd.PatientRaceNumericId ,',') [RACE]
+						, CASE	
+									WHEN  pd.firstrace = 	'Unknown'  Then	'7'
+									WHEN  pd.firstrace = 'Vietnamese' Then	'4'
+									WHEN  pd.firstrace = 	'Black'		then '2'
+									WHEN pd.firstrace =  'American Indian or Alaska Native'	Then '3'
+									WHEN pd.firstrace = 	'Native Hawaiian'	Then 	'4'
+									WHEN pd.firstrace = 	'Samoan'		Then	'4'
+									WHEN pd.firstrace = 	'Black or African American'	Then	'2'
+									WHEN pd.firstrace = 	'*Unknown'		Then	'7'
+									WHEN pd.firstrace = 	'*Deleted'		Then    '7'
+									WHEN pd.firstrace = 	'Korean'		Then	'4'
+									WHEN pd.firstrace = 	'Japanese'		Then	'4'
+									WHEN pd.firstrace = 	'Chinese'		Then	'4'
+									WHEN pd.firstrace = 	'Hispanic'		Then	' ' 
+									WHEN pd.firstrace = 	'Decline to Answer'	Then	'7'
+									WHEN pd.firstrace = 	'Guamanian or Chamorro'	Then	' '
+									WHEN pd.firstrace = 	'Other Asian'		Then	'4'
+									WHEN pd.firstrace = 	'Asian Indian'		Then	'4'
+									WHEN pd.firstrace = 	'Other Pacific Islander'	Then	'7'
+									WHEN pd.firstrace = 	'*Unspecified'		Then	'7'
+									WHEN pd.firstrace = 	'Asian'			Then	'4'
+									WHEN pd.firstrace = 	' ' 			Then	'7'
+									WHEN pd.firstrace = 	'North American Native'	Then	'3'
+									WHEN pd.firstrace = 	'Other'			Then	'7'
+									WHEN pd.firstrace = 	'White'			Then	'1'
+									WHEN pd.firstrace = 	'Filipino'		Then	'4'
+									WHEN pd.firstrace = 	'*NotApplicable'	Then	'7'
+									else ','
+									END [RACE]
+						 , case when pd.sex = 'Female' then concat('F',',')
+						when pd.sex = 'Male' then concat('M', ',')
+						when pd.sex = 'Unknown' then concat('U', ',')
+						else ',' end  [SEX]
+						, pd.AddressKey  AddressKey
+						, pd.IsValid [VALID]
+						  FROM  PatientDim pd		
+							
+										) PT_INFO on PT_INFO.PTKEY = ef.PatientKey
+LEFT OUTER JOIN (select     DepartmentDim.DepartmentKey DEP_KEY, 
+					case when departmentdim.ParentLocationName = 'DNH Parent Location' then 	CAST( 'DNH,' AS VARCHAR(25)) 
+					when departmentdim.ParentLocationName = 'NNH Parent Location' then CAST( 'NNH,' AS VARCHAR(25)) 
+					when departmentdim.ParentLocationName = 'Marco Parent Location' then CAST( 'MARCO,' AS VARCHAR(25))
+					else departmentdim.ParentLocationName end  AS FACILITY, 
+					
+					CASE WHEN departmentdim.RoomName = '*Not Applicable' THEN ','
+						 WHEN departmentdim.RoomName = '*Unspecified'then ','
+							WHEN departmentdim.RoomName = '*Unknown'then ','
+							ELSE  concat(departmentdim.RoomName,',')
+													END	  [ROOM]
+						  FROM   DepartmentDim		DepartmentDim		
+							
+										) DEPT_INFO on DEPT_INFO.DEP_KEY = ef.DepartmentKey
+LEFT OUTER JOIN (select  
+
+CASE WHEN max(dd.RoomName) = '*Not Applicable' THEN ','
+						 WHEN max(dd.RoomName) = '*Unspecified'then ','
+							WHEN max(dd.RoomName) = '*Unknown'then ','
+							when max(dd.RoomName) is NULL then ','
+							when max(dd.RoomName) = 'NULL' then ','
+							ELSE  concat(max(dd.RoomName),',')
+													END	  [ROOM], 
+							ef.encounterkey encounterkey
+from PatientLocationEventFact plef
+left join encounterfact ef on ef.EncounterKey = plef.EncounterKey
+left join DepartmentDim dd on dd.departmentkey = plef.LocationKey
+
+where plef.EventType = 'Admission'
+
+group by ef.EncounterKey
+							
+										)ROOM_INFO on ROOM_INFO.encounterkey = baf.PrimaryEncounterKey
+										--room_info.encounterkey = baf.PrimaryEncounterKey
+										--DEPT_INFO.DEP_KEY = ef.DepartmentKey
+LEFT OUTER JOIN		(SELECT		evf.PatientDurableKey PTDUR_KEY	,
+								evf.MemberNumber MEM_ID							
+										from EligibilityEventFact evf
+						)ELIGIBILITY  on ELIGIBILITY.PTDUR_KEY = PT_INFO.DUR_KEY--pd.PatientKey
+LEFT OUTER JOIN		(SELECT		cd.CoverageKey COVERAGE_KEY, 
+								cd.CoverageEpicId COVERAGE_EPICID, 
+								cd.PayorFinancialClass COVERAGE_FINCLASS, 
+								cd.SubscriberNumber mem_id
+										from CoverageDim cd
+						)COVERAGE  on COVERAGE.COVERAGE_KEY = ef.PrimaryCoverageKey  --thompson bill
+LEFT OUTER JOIN		(SELECT		cd2.CoverageKey COVERAGE_KEY, 
+cd2.coveragetype coverage_type,		
+								CASE WHEN  cd2.PayorFinancialClass= 'Medicare' THEN '1,'
+		 												WHEN cd2.PayorFinancialClass = 'Medicaid'then '2,'
+		 												WHEN cd2.PayorFinancialClass != 'Medicare' and cd2.PayorFinancialClass != 'Medicaid'
+														then '3,'
+		 												WHEN cd2.PayorFinancialClass = ' 'then '4,'
+															ELSE  ','
+															END AS second_src_pay
+								
+										from coveragedim cd2	
+						
+						)COVERAGE2  on COVERAGE2.COVERAGE_KEY = baf.SecondCoverageKey
+						--BILLING.SEC_COVERAGE   
+LEFT OUTER JOIN (SELECT		
+							CASE WHEN  pv.Npi   = '*Not Applicable' THEN ','
+						WHEN pv.Npi  = '*Unspecified'then ','
+							WHEN pv.Npi   = '*Unknown'then ','
+								ELSE  concat(pv.Npi, ',') 
+										END  AS NPI	
+										, pv.ProviderKey prov_id --providerkey
+										--from AttendingProviderFact	 ATTEND
+										
+										from providerdim pv --on pv.ProviderKey = attend.ProviderKey
+										
+						)ATTENDING  on ATTENDING.prov_id = baf.AttendingProviderDurableKey
+LEFT OUTER JOIN (SELECT		pv.providerkey  PROVKEY,
+										 --pv.Npi NPI
+							CASE WHEN  pv.Npi   = '*Not Applicable' THEN ','
+								WHEN pv.Npi  = '*Unspecified'then ','
+									WHEN pv.Npi   = '*Unknown'then ','
+									ELSE  concat(pv.Npi, ',') 
+											END  AS NPI	
+										from providerdim pv 
+						)ADMITTING  on ADMITTING.PROVKEY = baf.AdmittingProviderDurableKey
+
+
+ LEFT OUTER JOIN ( SELECT   
+										base.encounterkey encounterkey
+																--(max(CASE WHEN base.dxseq  = '1' THEN base.DX_VALUE
+																,concat(',',
+														(max(CASE WHEN base.SEQ  = '1' THEN base.NPI
+																	ELSE ''END)), ',',
+																	(max(CASE WHEN  base.SEQ= '2' THEN base.NPI
+																	ELSE ''END)) , ',',
+																	(max(CASE WHEN  base.SEQ = '3' THEN base.NPI
+																	
+																	ELSE ''END)) , ','
+																	) as commas
+
+										
+										
+																					from  (SELECT 	pv.providerkey  PROVKEY,
+																					 --pv.Npi NPI
+																						dense_rank() OVER(PARTITION BY ctf.encounterkey ORDER BY  ctf.StartDateKey) [SEQ], 
+																						CASE WHEN  pv.Npi   = '*Not Applicable' THEN ''
+																							WHEN pv.Npi  = '*Unspecified'then ''
+																								WHEN pv.Npi   = '*Unknown'then ''
+																								ELSE  pv.Npi
+																										END  AS NPI
+																						, ctf.EncounterKey encounterkey
+															FROM  CareTeamFact ctf
+															left join providerdim pv on pv.ProviderKey = ctf.ProviderKey
+													
+															where ctf.TeamType = 'Treatment Team'
+															and ctf.Role = 'Consulting Physician'
+															--dxevent.type = 'Encounter Diagnosis' 
+															) base 
+							GROUP BY base.encounterkey
+							)CTF ON CTF.encounterkey = baf.PrimaryEncounterKey
+--left join ProviderDim attprov								on attprov.ProviderKey = ef.AttendingProviderKey
+--left join providerdim admprov								on admprov.ProviderKey = ef.AdmittingProviderKey
+LEFT OUTER JOIN (SELECT				address.AddressKey, 
+											concat(replace(address.PostalCode,'-','') ,',')  [ZIP]
+										from AddressDim address
+						)ADDRESS  on address.addresskey= PT_INFO.AddressKey
+
+						---ICD10CM string
+ LEFT OUTER JOIN ( SELECT   
+											base.ENCNTRKEY encounterkey
+																--(max(CASE WHEN base.dxseq  = '1' THEN base.DX_VALUE
+																,concat(
+														(max(CASE WHEN base.dxseq  = '1' THEN base.DX_VALUE
+																	ELSE ''END)), ',' ,
+																	(max(CASE WHEN  base.dxseq = '2' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '3' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '4' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '5' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '6' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '7' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '8' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '9' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '10' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '11' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '12' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	 (max(CASE WHEN base.dxseq  = '13' THEN base.DX_VALUE
+																	ELSE ''END)), ',' ,
+																	(max(CASE WHEN  base.dxseq = '14' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '15' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '16' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '17' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '18' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '19' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '20' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '21' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '22' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '23' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '24' THEN base.DX_VALUE
+																	ELSE ''END))  ,  ',' ,
+																	(max(CASE WHEN  base.dxseq = '25' THEN base.DX_VALUE
+																	ELSE ''END)) , ',') as dx_codes
+
+										
+										
+										from  (SELECT dxevent.encounterkey ENCNTRKEY, 
+										dense_rank() OVER(PARTITION BY  dxevent.encounterkey ORDER BY     max(dxevent.isprimary) desc, dx9.Value desc) [DXSEQ], 
+										--need to add dxevent.subtype so hospital billing takes precidence?
+										replace(dx9.Value,'.','')																 [DX_VALUE], 
+										max(Replace(CONVERT(varchar(10),  dxdate.DateValue, 101),'/',''))                   [DXDATE]
+															FROM  diagnosiseventfact dxevent 
+															left join encounterfact ef on dxevent.EncounterKey = ef.EncounterKey
+													
+															left join diagnosisdim diagdim--losing mom/baby
+															on diagdim.DiagnosisKey = dxevent.DiagnosisKey													
+															left join DiagnosisTerminologyDim dx9 --make sure to filter  --icd9 encnt_dx
+															on dx9.DiagnosisKey	 = diagdim.DiagnosisKey 
+															and dx9.Type = 'ICD-10-CM'  --binq
+															Left join datedim dxdate
+															on dxdate.DateKey = dxevent.StartDateKey
+															--where dxevent.type = 'Billing Diagnosis'
+															--where dxevent.type in ( 'Billing Diagnosis', 'Encounter Diagnosis' )  -- don't do encounter dx, causing dup issues
+															where dxevent.type = 'Billing Diagnosis'
+															and dxevent.SubType = 'Hospital Billing'
+															group by dxevent.encounterkey, dx9.Value
+															--dxevent.type = 'Encounter Diagnosis' 
+															) base 
+							GROUP BY base.ENCNTRKEY
+							) DX_INFO ON DX_INFO.encounterkey = ef.EncounterKey
+
+
+
+---below icd-10-pcs 
+LEFT OUTER JOIN ( SELECT					base.encounterkey encounterkey, 
+											
+											concat(
+														(max(CASE WHEN  base.PROB_SEQ = '1' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '2' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '3' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '4' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '5' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '6' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '7' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '8' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '9' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '10' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '11' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '12' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '13' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '14' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '15' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '16' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '17' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '18' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '19' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '20' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '21' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '22' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '23' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '24' THEN base.prob
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN base.PROB_SEQ = '25' THEN base.prob
+														ELSE ''END)) , ',') 
+														as PROB_codes,		
+																--(max(CASE WHEN base.dxseq  = '1' THEN base.DX_VALUE
+
+											concat(
+														(max(CASE WHEN  base.PROB_SEQ = '1' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '2' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '3' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '4' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '5' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '6' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '7' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '8' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '9' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '10' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '11' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '12' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '13' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '14' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '15' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '16' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '17' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '18' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '19' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '20' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '21' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '22' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ = '23' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN  base.PROB_SEQ  = '24' THEN base.prob_date
+														ELSE ''END))  ,  ',' ,
+														(max(CASE WHEN base.PROB_SEQ = '25' THEN base.prob_date
+														ELSE '' END)))
+														as PROB_dates						
+										
+										
+										from  (SELECT  
+										proce.EncounterKey  encounterkey, 
+										proce.ProcedureCodeset																		[PROB_CODE],
+										dense_rank() OVER(PARTITION BY proce.encounterkey ORDER BY proce.ProcedureStartInstant ASC, proce.procedurecode desc) [PROB_SEQ],
+										replace(CONVERT(varchar(10), proce.ProcedureStartInstant, 101),'/','') [prob_date],
+										proce.ProcedureCode  [prob], 
+										---proce.ProcedureStartDateKey  [date]
+										CONVERT(varchar(10), proce.ProcedureStartInstant, 101) [date]
+		
+										
+										
+															FROM   ProcedureEventFact proce ---ICD-10-PCS
+															where proce.ProcedureCodeSet = 'ICD-10-PCS'
+															) base 
+							GROUP BY base.encounterkey
+							) PROB_INFO ON  PROB_INFO.encounterkey = ef.EncounterKey
+---baby mother information
+LEFT OUTER JOIN (SELECT  birth.MotherEncounterKey MotherEncounterkey, 
+                    
+						Case isnumeric(babyacnt.AccountEpicId) when 1 then convert(varchar,babyacnt.AccountEpicId)  + ','
+                            else ',' end  [BABYPT_ID],
+								concat(convert(varchar,cast(birth.BirthWeight as float)),',')              [BABY_WT],	
+							case when birth.GestationalAgeDays > 259 then '1,'   
+							when birth.GestationalAgeDays <224 then '3,'
+								 when birth.GestationalAgeDays between 224 and 259 then '2,' 
+								 when birth.GestationalAgeDays  IS NULL then ',' end                            [NEWBORN_TERM],
+							case when birth.DeliveryDepartmentKey = '1476' then 'Y,'   --nNNH NICU|deptkey is 1476
+							when birth.DeliveryDepartmentKey != '1476' then 'N,'
+							when birth.DeliveryDepartmentKey IS NULL then ','
+							else ',' end   [NICU],
+							convert(varchar,(birth.GestationalAgeDays/7))   [NEWBORN_WKS],
+							--convert(varchar, cast(birth.BirthKey as numeric)) [BIRTHKEY_1],
+							cast(birth.BirthKey as varchar) [BIRTHKEY_1],
+		/*	
+						   --	CASE when birth.BirthKey > 0 then babyacnt.AccountEpicId else ' 'end HAR_BABY, 
+							CASE when birth.BirthKey > 0 then birth.BirthWeight  else ' 'end  BABY_WT,
+							CASE when birth.BirthKey > 0 then birth.GestationalAgeDays  else ' 'end  GESTATION, 
+							CASE when birth.BirthKey > 0  then birth.DeliveryDepartmentKey else ' 'end  DELIVERY_DEPT, */
+							birth.BirthKey birthkey--might be useful
+
+							
+
+												FROM BIRTHFACT BIRTH
+												left join BillingAccountEncounterMappingFact baemf_baby  on baemf_baby.EncounterKey = birth.BabyEncounterKey
+												left join BillingAccountFact BabyAcnt  on babyacnt.BillingAccountKey = baemf_baby.BillingAccountKey
+												left join encounterfact ef on babyacnt.PrimaryEncounterKey = ef.EncounterKey
+												left join departmentdim dd on dd.DepartmentKey = ef.DepartmentKey
+												
+												
+												where babyacnt.PrimaryAccountType =  'Hospital Billing'
+												)BIRTH  on BIRTH.motherencounterkey = ef.encounterkey
+												
+
+
+
+												
+where ef.DischargeDispositionCode NOT IN (
+	'21', '30','40','42','61','87','89','100','200'
+	)
+	--ALSO Exclude by verbiage 
+	and  ef.DischargeDisposition NOT IN (
+	'Court/Law Enforcement',
+	'Still a Patient',
+	'Expired at Home',
+	'Expired -Place Unknown',
+	'Swing Bed',
+	'Court/Law Enforcement w/ Planned Readmission',
+	'Swing Bed w/Planned Readmission',
+	'ED Dismiss - Never Arrived',
+	'ED Dismiss - Diverted Elsewhere', 
+	'*Unspecified', 
+	'*Not Applicable', 
+	''
+	)
+
+	and PT_INFO.VALID = '1'
+	and baf.AccountEpicId IS NOT NULL
+	and baf.PrimaryAccountType = 'Hospital Billing'
+	--and baf.AccountEpicId = '210000005436'
+	and baf.DischargeDateKey between   @firstDay and @lastDay
+	--between '20220606' and '20220608'
+	
+--and baf.AccountEpicId = '220000020070'
+	---testing below
+	/*
+	and baf.AccountEpicId in (
+'220000012434',
+'220000012435',
+'220000012437',
+'220000012440',
+'220000012441'
+
+
+
+
+
+)  */
+
+) 
+
+select * from (
+
+select  
+cdqm.rec_type as rec_type, 
+Convert(varchar(100),cdqm.EPISODEID) as episode_id,
+concat(Convert(varchar(100),cdqm.EPISODEID2), ',') as Episode_id2,
+
+cdqm.COMMAS_AFTERINS as two_commas,
+cdqm.ADMITDATE as Admit_date,
+cdqm.ADMIT_SRC as admit_src, 
+cdqm.ADMIT_TYPE as admit_type, 
+cdqm.FACILITY as facility_cd,
+cdqm.THOMPSON_BILL as thompson_bill, 
+cdqm.DISCH_DATE as disch_date, 
+cdqm.DISCH_STATUS_DISP as disch_status, 
+cdqm.DOB as dob,
+cdqm.PRI_SRC_PAY as prm_src_pay,
+cdqm.HISP_ETHINICITY as hisp_ethnicity,
+cdqm.PATIENT_ID as patient_id, 
+cdqm.CMS_NBR  as cms_nbr,
+cdqm.NPI_NBR as npi_nbr, 
+cdqm.FIRST_NAME as first_name,
+cdqm.MEM_NBR as mem_nbr, 
+cdqm.LAST_NAME as last_name,  
+cdqm.ATTENDING as attending, 
+cdqm.ADMITTING as admitting,
+cdqm.COMMAS  as commas, 
+cdqm.ZIP as zip, 
+cdqm.ROOM as room,
+cdqm.RACE as race,
+cdqm.SECND_SRC_PAY as second_src_pay, 
+cdqm.COMMAS_AFTERINS as commas_afterins,
+',,' as  commasafterinc,
+cdqm.GENDER  as sex,
+cdqm.DX_LIST as dx_list, 
+cdqm.PROB_LIST  prob_list, 
+cdqm.PROB_DATE_LIST as prob_dates 
+, cdqm.enc_type
+, cdqm.PATIENT_CLASS
+---added for testing
+--,cdqm.BIRTHEXIST as birthexist
+
+from cdqm
+
+
+
+
+Union
+/********************************************start rectype28***********************************/
+--below is rec_type28
+select '28,' as rec_type, 
+Convert(varchar(100),cdqm.EPISODEID) as episode_id,  --neeed 100 total
+concat(Convert(varchar(100),cdqm.EPISODEID2), ',') as Episode_id2,
+
+ RIGHT(cdqm.disch_status_disp, LEN(cdqm.disch_status_disp) - 1) as disc_disp,
+cdqm.DISCH_STATUS_DP as disc_cd,
+--28 needed
+'','','','','','','','','','',
+'','','','','','','','','','',
+'','','','','','','',''
+---testing
+,'',''
+
+from cdqm 
+--where cdqm.patientclass = 'Outpatient'
+
+--end 2nd union where rec_type is 28
+
+/********************************************end rectype28***********************************/
+
+UNION
+
+select 
+
+max('10,') as rec_type, 
+Convert(varchar(100), subquery2.episode_id) as episode_id,
+concat(Convert(varchar(100),subquery2.episode_id ), ',') as Episode_id2,
+
+--concat(subquery2.episode_id, ',') as episode_id,
+--concat(subquery2.episode_id, ',') as episode_id2,
+concat(max(cpt4.CptCode), ','),-- as two_commas,
+
+max(concat(Replace(CONVERT(varchar(10), btrans._CreationInstant, 101),'/',''), ',')) as start_date, --  as  admit_src,
+cast(ROW_NUMBER() OVER (PARTITION BY max(subquery2.episode_id) --max(subquery2.episode_id) 
+                           ORDER BY cast(max(btrans._CreationInstant) as datetime) asc) as varchar) as admit_src, --admit_date
+
+--need 27
+'','','','','','','','','','',
+'','','','','','','','','','',
+'','','','','','',''
+---testing
+,'',''
+
+from ( select  distinct 
+--cdqm.EPISODEID2 as episode_id,  
+--Case isnumeric(cdqm.EPISODEID2) when 1 then  convert(varchar, cdqm.EPISODEID2) else '' end		episode_id,
+--CAST(cdqm.EPISODEID2 AS numeric) episode_id,
+Case isnumeric(cdqm.EPISODEID2) when 1 then 
+		cdqm.EPISODEID2  else '' end episode_id,
+		cdqm.PATIENT_CLASS as patientclass
+/*
+Case isnumeric(cdqm.billingaccountkey) when 1 then 
+		convert(varchar, cdqm.billingaccountkey)  else '' end as ep_id, 
+Case isnumeric(cdqm.epidosde_id ) when 1 then 
+		convert(varchar, cdqm.epidosde_id )  else '' end as episode_id,  
+		cdqm.patientclass as patientclass  */
+		
+from cdqm 
+where cdqm.PATIENT_CLASS in  ( 'Outpatient', 'Emergency') 
+) as subquery2
+left join BillingAccountFact baf 
+on baf.AccountEpicId  = subquery2.episode_id
+left join BillingTransactionFact btrans
+on btrans.BillingAccountKey = baf.BillingAccountKey
+inner join BillingProcedureDim  cpt4  -- do inner to elimate nulls
+on cpt4.BillingProcedureKey = btrans.BillingProcedureKey--pef.ProcedureKey
+
+--and cdqm.cptcode != 'NULL' --and cdqm.cptdate != 'NULL'
+and cpt4.CptCode IS NOT NULL
+and cpt4.cptcode != ''
+and cpt4._CreationInstant IS NOT NULL
+group by cpt4.CptCode, subquery2.episode_id
+
+--and cdqm.cptdate >  '2020-01-01'
+--group by cpt4.CptCode, subquery2.episode_id
+
+/********************************************end rectype10***********************************/
+
+
+
+Union
+
+/********************************************start rectype18***********************************/
+--below is rec_type18 -baby info
+select
+'18,' as rec_type , 
+Convert(varchar(100), subquery2.episode_id) as episode_id,
+--concat(subquery2.episode_id, ',') as episode_id,
+Convert(varchar(100),birth.BABYPT_ID) as Episode_id2,
+
+birth.NICU  nicu,
+birth.BABY_WT birthweight,
+(',,,,,,') as afterbirthweight,
+birth.NEWBORN_TERM,
+(',,,') as last
+--25 needed
+,'','','','','','','','','','',
+'','','','','','','','','','',
+'','','','',''
+---testing
+,'','' 
+from (select  distinct 
+
+Case isnumeric(cdqm.EPISODEID2) when 1 then 
+		Convert(varchar(100),cdqm.EPISODEID2)
+		--cdqm.EPISODEID2  
+		else '' end episode_id, 
+		cdqm.BIRTHEXIST
+
+		
+from cdqm  
+where cdqm.BIRTHEXIST > 0
+and cdqm.BIRTHEXIST IS NOT NULL
+) as subquery2    
+LEFT OUTER JOIN (SELECT  birth.MotherEncounterKey MotherEncounterkey, 
+                    
+						Case isnumeric(babyacnt.AccountEpicId) when 1 then convert(varchar,babyacnt.AccountEpicId)  + ','
+                            else ',' end  [BABYPT_ID],
+								concat(convert(varchar,cast(birth.BirthWeightGrams as float)),',')              [BABY_WT],	
+							case when birth.GestationalAgeDays > 259 then '1,'   
+							when birth.GestationalAgeDays <224 then '3,'
+								 when birth.GestationalAgeDays between 224 and 259 then '2,' 
+								 when birth.GestationalAgeDays  IS NULL then ',' end                            [NEWBORN_TERM],
+							case when birth.DeliveryDepartmentKey = '1476' then 'Y,'   --nNNH NICU|deptkey is 1476
+							when birth.DeliveryDepartmentKey != '1476' then 'N,'
+							when birth.DeliveryDepartmentKey IS NULL then ','
+							else ',' end   [NICU],
+							convert(varchar,(birth.GestationalAgeDays/7))   [NEWBORN_WKS],
+							--convert(varchar, cast(birth.BirthKey as numeric)) [BIRTHKEY_1],
+							cast(birth.BirthKey as varchar) [BIRTHKEY_1],
+		/*	
+						   --	CASE when birth.BirthKey > 0 then babyacnt.AccountEpicId else ' 'end HAR_BABY, 
+							CASE when birth.BirthKey > 0 then birth.BirthWeight  else ' 'end  BABY_WT,
+							CASE when birth.BirthKey > 0 then birth.GestationalAgeDays  else ' 'end  GESTATION, 
+							CASE when birth.BirthKey > 0  then birth.DeliveryDepartmentKey else ' 'end  DELIVERY_DEPT, */
+							birth.BirthKey birthkey--might be useful
+							, babyacnt.PrimaryEncounterKey babyencounterkey
+							
+
+												FROM BIRTHFACT BIRTH
+												left join BillingAccountEncounterMappingFact baemf_baby  on baemf_baby.EncounterKey = birth.BabyEncounterKey
+												left join BillingAccountFact BabyAcnt  on babyacnt.BillingAccountKey = baemf_baby.BillingAccountKey
+												left join encounterfact ef on babyacnt.PrimaryEncounterKey = ef.EncounterKey
+												left join departmentdim dd on dd.DepartmentKey = ef.DepartmentKey
+												
+												
+												where babyacnt.PrimaryAccountType =  'Hospital Billing'
+												)BIRTH  on BIRTH.BIRTHKEY_1 = subquery2.BIRTHEXIST
+												
+
+--end 3rd union where rec_type is 18
+/********************************************end rectype18***********************************/
+
+Union
+
+/********************************************start rectype19***********************************/
+--below is rec_type19 -mommy info
+select 
+'19,' as rec_type,
+Convert(varchar(100), subquery2.episode_id) as episode_id,
+Convert(varchar(100),birth.BABYPT_ID) as Episode_id2,
+
+(',,,'),
+birth.NEWBORN_WKS as newbornweeks,
+--28 needed
+'','','','','','','','','','',
+'','','','','','','','','','',
+'','','','','','','',''
+---testing
+,'',''
+
+from (select  distinct 
+
+Case isnumeric(cdqm.EPISODEID2) when 1 then
+         Convert(varchar(100),cdqm.EPISODEID2)
+		--cdqm.EPISODEID2  
+		else '' end episode_id, 
+		cdqm.BIRTHEXIST
+
+		
+from cdqm  
+where cdqm.BIRTHEXIST > 0
+and cdqm.BIRTHEXIST IS NOT NULL
+) as subquery2    
+LEFT OUTER JOIN (SELECT  birth.MotherEncounterKey MotherEncounterkey, 
+                    
+						Case isnumeric(babyacnt.AccountEpicId) when 1 then convert(varchar,babyacnt.AccountEpicId)  + ','
+                            else ',' end  [BABYPT_ID],
+							concat(convert(varchar,cast(birth.BirthWeightGrams as float)),',')              [BABY_WT],		
+							case when birth.GestationalAgeDays > 259 then '1,'   
+							when birth.GestationalAgeDays <224 then '3,'
+								 when birth.GestationalAgeDays between 224 and 259 then '2,' 
+								 when birth.GestationalAgeDays  IS NULL then ',' end                            [NEWBORN_TERM],
+							case when birth.DeliveryDepartmentKey = '1476' then 'Y,'   --nNNH NICU|deptkey is 1476
+							when birth.DeliveryDepartmentKey != '1476' then 'N,'
+							when birth.DeliveryDepartmentKey IS NULL then ','
+							else ',' end   [NICU],
+							convert(varchar,(birth.GestationalAgeDays/7))   [NEWBORN_WKS],
+							--convert(varchar, cast(birth.BirthKey as numeric)) [BIRTHKEY_1],
+							cast(birth.BirthKey as varchar) [BIRTHKEY_1],
+		/*	
+						   --	CASE when birth.BirthKey > 0 then babyacnt.AccountEpicId else ' 'end HAR_BABY, 
+							CASE when birth.BirthKey > 0 then birth.BirthWeight  else ' 'end  BABY_WT,
+							CASE when birth.BirthKey > 0 then birth.GestationalAgeDays  else ' 'end  GESTATION, 
+							CASE when birth.BirthKey > 0  then birth.DeliveryDepartmentKey else ' 'end  DELIVERY_DEPT, */
+							birth.BirthKey birthkey--might be useful
+							, babyacnt.PrimaryEncounterKey babyencounterkey
+							
+
+												FROM BIRTHFACT BIRTH
+												left join BillingAccountEncounterMappingFact baemf_baby  on baemf_baby.EncounterKey = birth.BabyEncounterKey
+												left join BillingAccountFact BabyAcnt  on babyacnt.BillingAccountKey = baemf_baby.BillingAccountKey
+												left join encounterfact ef on babyacnt.PrimaryEncounterKey = ef.EncounterKey
+												left join departmentdim dd on dd.DepartmentKey = ef.DepartmentKey
+												
+												
+												where babyacnt.PrimaryAccountType =  'Hospital Billing'
+												)BIRTH  on BIRTH.BIRTHKEY_1 = subquery2.BIRTHEXIST
+--end 4thd union where rec_type is 19
+/********************************************end rectype19***********************************/
+
+
+
+
+
+) dum
+--order by dum.episode_id
+
+--where dum.rec_type = '2,' --'18,'
+--order by dum.episode_id, len(dum.rec_type), len(admit_src)
+--where dum.rec_type =   '18,'--'2,'
+where dum.disch_status != 'eedcode'
+and dum.rec_type in ('2,', '28,','18,','19,')
+order by dum.Episode_Id, len(dum.rec_type), dum.rec_type , dum.Admit_date, dum.admit_src
+
+
